@@ -1,0 +1,4 @@
+\section{Conclusions and Future Work}
+We have shown how perf hardware counters can be used to measure cache hits inside a 6MB L3-cache ix86 microprocessor clocked at 3GHz evaluating a simulated obfuscated circuit. We have proposed an analytical model to explain the execution times observed. Even for large width circuits where $w >> 10^6$, ...
+We plan to improve our simulation by replacing the random generation mechanism from using the C random function to using a 'stride' method described in this paper. 
+We also plan to use the Intel Performance Counter Monitor library as a high level interface for measuring real time performance data directly inside the code. In particular, we plan to measure the CPU cache and instruction metrics at initialisation time, then at generation time and finally at execution time.
