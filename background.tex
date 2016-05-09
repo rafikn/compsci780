@@ -13,7 +13,7 @@ Because of the acyclic and oriented nature of the circuit, each node can be repr
 \par
 \begin{figure}[h]
 	\center
-	\includegraphics[width=0.9\textwidth]{img/graph.png}
+	\includegraphics[width=0.8\textwidth]{img/graph.png}
 	\caption{Simple high level representation of a boolean circuit}
 \end{figure}
 \par
@@ -39,6 +39,7 @@ The second requirement is less trivial and also known as the Virtual Black Box $
 Barak et al. concluded that the VBB requirement is impossible to attain in certain situations\cite{barak}, however, it is possible to come close to meeting the second requirement, which in practice is enough to maintain the usefulness of obfuscation as an effective security measure. This is done by modifying the requirement of VBB, and replacing it with two weaker definitions that can still result in rendering a programme unintelligible in a meaningful and practical way. These definitions are namely indistinguishability $iO$ and differing-input obfuscation $diO$, which require that for any circuit pair $C_1$ and $C_2$ from the same circuit family $C$ that compute the same functionality $f$, the obfuscated versions of $C_1$ and $C_2$; $iO(C_1)$ and $iO(C_2)$ are perfectly indistinguishable. The probability of an observer being able to tell if an output was generated from $iO(C_1)$ or from $iO(C_2)$ is negligible.
 \par
 Some work has been done within the scientific community to develop real-life obfuscations that meet the requirements given by Barak et al. Garg et al.\cite{garg} published an obfuscation construction valid for all polynomial-size, log-depth circuits constructed under novel algebraic hardness assumptions. Based on this work, Banescu et al.\cite{tum} published a proof-of-concept implementation of this $iO$ construction.
-However, to date there is no efficient practical implementation of Barak et al.\cite{barak} indistinguishability obfuscation requirement. 
-This lack of ready-made obfuscators does not limit the ability of this paper to prove or disprove the hypothesis that obfuscation is limited by the hardware restraints of the operating system, as a simulation of an obfuscation-like process is sufficient for this purpose.
+However, to date there is no efficient practical implementation of Barak et al.\cite{barak} indistinguishability obfuscation requirement. The study of the security of functional obfuscators is beyond the scope of this paper.
+\par
+But this lack of ready-made obfuscators does not limit the ability of this paper to prove or disprove the hypothesis that obfuscation is ultimately limited by the hardware restraints of the operating system, as a simulation of an obfuscation-like process is sufficient for this purpose.
 
