@@ -1,8 +1,14 @@
+% !BIB TS-program = biber
 \documentclass[a4paper,11pt]{article}
 %-----------------------------------------------------------
 \usepackage{amsmath}
 \usepackage{blindtext}
 \usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[backend=biber]{biblatex}
+\addbibresource{reference.bib}
+
 %-----------------------------------------------------------
 %-----------------------------------------------------------
 \begin{document}
@@ -15,8 +21,9 @@
 \input{method}
 \input{conclusion}
 %-----------------------------------------------------------
-\medskip
-\bibliographystyle{unsrt}
-\bibliography{reference}
+
+\printbibliography
+
+
 %-----------------------------------------------------------
 \end{document}
