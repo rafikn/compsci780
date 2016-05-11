@@ -40,14 +40,13 @@ The operating system used is Linux Fedora 22 on kernel 4.4.5.
 \subsection{Metrics}
 The \textit{perf} linux command was used to measure the impact of evaluating a circuit on the CPU. \textit{perf} is a tool written in \text{C} that uses Performance Counters to profile an application\footnote{\url{https://github.com/torvalds/linux/tree/master/tools/perf}}. Performance counters are CPU hardware registers that count hardware events such as instructions executed, cache-misses suffered, or branches mispredicted\cite{perfwiki}. The \textit{perf} tool has the advantage of being program oriented, instead of system oriented \cite{ibm}.   In particular, the \textit{perf stat} subcommand allows to retrieval event counts that are of interest to our experiment. These metrics are mainly \textit{instructions, cycles} and \textit{LLC-loads}. 
 \begin{itemize}
-\item \textbf{instructions} are unitary operations executed by the CPU at the lowest level such ADD, SUB, LOAD or STORE. Typically early processors would pipeline fetching the instruction from the program counter, decoding it, reading its associated variables from the registers, executing its logic order and finally writing the result back to registers or storing it the system's main memory\cite{jmor}. After an initial set up time, pipeling allows to execute one instruction per cycle, assuming no stalls. Modern CPUs 
-\item \textbf{cycles}
-\item \textbf{LLC-loads}
+\item \textbf{instructions} are unitary operations executed by the CPU at the lowest level such ADD, SUB, LOAD or STORE. They can represent arithmetic operations, data handling operations or control flow operations. Modern CPUs include more complex instructions for complicated integer or float point operations.
+\item \textbf{cycles} are the steps performed by the CPU when it recieves an instruction. Typically early processors would pipeline fetching the instruction from the program counter, decoding it, reading its associated variables from the registers, executing its logic order and finally writing the result back to registers or storing it the system's main memory\cite{jmor}. After an initial set up time, pipeling allows to execute one instruction per cycle, assuming no stalls. Modern CPUs achieve more than on instruction per cycle using techniques like \textit{Instruction-level Parallelism} (loading more than one instruction in the pipeline) and \textit{out-of-order execution} (allowing the simultanious exectution of multiple instructions that don't depend on each other for input or output). The Intel Core i5 can handle up to 4 instructions per clock cycle\cite{agner}, but this figure is usually lower because of stalls, i.e.\ when the pipeline is waiting for the result of a previous instruction before proceeding.
+
+\item \textbf{LLC-loads} are instructions to load results from the Last-Level of Cache (or L3) of the CPU. L3 cache is the largest and highest-latency level of cache for the Intel Core i5 CPU. It is shared amongst all its cores.
+
 \end{itemize}
-For every value of $w$, we configure \textit{perf} to run the experiment 3 times and collect the arithmetic average counts.
-
-
-
+For every value of $w$, we configure \textit{perf} to run the experiment 3 times and collect the arithmetic average of the event counters.
 
 
 \section{Simulation Results}
