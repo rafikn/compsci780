@@ -28,15 +28,14 @@ where $T$ is the total elapsed (wallclock) time per gate, $t_g$ is the CPU time 
 \par
 In our experiment, we generate the entire circuit prior to its evaluation. $t_g$ is in fact related to the time cost of loading of the gate for execution. We assume that this time component is near constant per gate and is not affected by the width $w$. The generation step executed initially is not monitored for performance. The resulting circuit is stacked gate by gate in a simplified BPW file. Following the initial BPW model the first 4 bytes represent the header of the a BPW file\cite{clark}. The following bytes represent the total gates of the circuit. All gates are sequentially represented from index $0$ to index $10^8-1$. A given gate's encoding varies from 9 to 25 bytes. The first byte holds the type of the gate. The following 8 to 24 bytes present the input indices encoded over 64-bits each. We could optimise the gate's representation further to compress a gate's representation but we kept this current model for simplicity. Since we fixed the size of the circuits under test to $N = 10^8$, the average size of a circuit stored in a BPW file is $avg(sizeof(Gate)) * 10^8 \approx 2 GB$ \footnote{We modelled 14 types of Gates; 1 $\times$ 1-input, 6 $\times$ 2-input and 7 $\times$ 3-input gates. On average, a gate has 2.43 inputs encoded with 8 bytes per input plus one byte for the gate type.}.
 \par
-We run the circuits on an x86\_64 board with 16GB of \textit{RAM} and an Intel(R) Core(TM) i5-3570K CPU clocked at 3.40GHz with the following cache capacities: cache capacities: L1 = 32K for data and instructions, L2 = 256Kb and L3 = 6144Kb.
+We run the circuits on an x86\_64 board running Linux 3.4.6 with 16GB of \textit{RAM} and an Intel(R) Core(TM) i5-3570K CPU clocked at 3.40GHz with the following cache capacities: cache capacities: L1 = 32K for data and instructions, L2 = 256Kb and L3 = 6144Kb. Our implementation uses the \textit{unsigned long long} type to represent 8-byte variables and the \textit{char} type to represent one byte. The program is compiled using the C99 standard library.
 \par
-We used the \textit{perf} linux command to measure the impact of evaluating a circuit on the CPU. \textit{perf} is a tool written in C that uses Performance Counters to profile an application. Performance counters are CPU hardware registers that count hardware events such as instructions executed, cache-misses suffered, or branches mispredicted\cite{perf}. In particular, the \textit{perf stat} subcommand allows to obtain event counts that are of interest to our experiment. These events are mainly \textit{instructions, cycles, LLC-loads} and \textit{LLC-misses}. For every value of $w$, we configure \textit{perf} to run the experiment 3 times and collect the average counts.
+We use the \textit{perf} linux command to measure the impact of evaluating a circuit on the CPU. \textit{perf} is a tool written in C that uses Performance Counters to profile an application. Performance counters are CPU hardware registers that count hardware events such as instructions executed, cache-misses suffered, or branches mispredicted\cite{perf}. In particular, the \textit{perf stat} subcommand allows to obtain event counts that are of interest to our experiment. These events are mainly \textit{instructions, cycles} and \textit{LLC-loads}.
+\par
+For every value of $w$, we configure \textit{perf} to run the experiment 3 times and collect the average counts.
 
-
 \par
-TODO More about perf
-\par
-From the results collect we established the following:
+From the results collected we established the following:
 
 \[ T =
   \begin{cases}
@@ -46,10 +45,18 @@ From the results collect we established the following:
 \]
 
 We estimate that $t_m(w)$ for $w = 10^3$ is negligable. In our experiment $C_{10^6}$ the total run time is assumed to reflect load and execution operations only (with no width penality) which establishes $t_g + t_e \approx 130\text{ ns}$.\footnote{ For $w = 10^3, N=10^8$, we have $N \times T = 13116 \text{ms} \implies T \approx 130 \text{ns}$ }. 
-Since the CPU has a frequence of 3.40 GHz the load and execution of a gate require about 450 CPU cycles per gate\footnote{$130 \times 10^{-9} \times 3.4 \times 10^9 = 442$}, which is up to 2000 instruction per cycle (at 1.7 intruction per cycle) on a quad-core CPU assuming no stalls. For all tested $w < 10^7$ we observer a stable instruction per cycle rate at 1.7 ins/cycle with 0.2 instruction per cycle stalled.
+Since the CPU has a frequence of 3.40 GHz the load and execution of a gate require about 450 CPU cycles per gate\footnote{$130 \times 10^{-9} \times 3.4 \times 10^9 = 442 cycles$}, which is up to 2000 instruction per cycle (at 1.7 intruction per cycle) on a quad-core CPU assuming no stalls. For all tested $w < 10^7$ we observer a stable instruction per cycle rate at 1.7 ins/cycle with 0.2 instruction per cycle stalled.
 \par
 For $ w > 10^7$ the computation becomes memory-bound, allowing us to estimate $t_m(10^7) = 162$ nsec and $t_m(10^8) = 176$ nsec. Since we used 6 2-input gate types and 7 3-input gate types (out of 14 gate types), a gate evaluation will have about 2.5 memory-fetches on average to read its inputs. The gate evaluation process will also write the result in the output buffer which will cause additional memory writes. There will also be some memory-reads when reading the gate's type.
 \par
-Once the gate is unpacked in a top-level struct of 16 bytes (1 byte for the type, 8 bytes for the input pointer, before padding to the largest power of 2), with 2.5 input indices of 8 bytes each, a level needs $ (16 + 2.5 \times 8) \times w $ of memory to be fully represented, e.g.\ levels for $w = 10^7$ need 3.6 GB. This amout of memory cannot obviously reside in cache, and on 4 GB memory plaftorms there would certainly be page-faults requiring hard disk activity. We estimate that the level array can fit inside our system's 16GB RAM without disk faults. Our initial algorithm loads an entire level before feeding to execution loop. We could improve this by evaluating a gate as soon as it is loaded.  
+Once the gate is unpacked in a top-level struct of 16 bytes (1 byte for the type, 8 bytes for the input pointer, before padding to the largest power of 2), with an average of 2.5 input indices of 8 bytes each, a level needs $ (16 + 2.5 \times 8) \times w $ of memory to be fully represented, e.g.\ levels for $w = 10^7$ need 3.6 GB. This amout of memory cannot obviously reside in cache, and on 4 GB memory plaftorms there would certainly be page-faults requiring hard disk activity. We estimate that the level array can fit inside our system's 16GB RAM without disk faults. Our initial algorithm loads an entire level before feeding it to execution loop. We could improve this by evaluating a gate as soon as it is loaded.  
 \par
-We desigend the gate inputs to be spread randomly in an array of width $w$. For any large enough $w$, the CPU last level cache (LLC) will alawys miss when the input bit array cannot be fully contained. On our test platform, LLC is 6MB wide. Whenever $w > 10^7$, the input array occupies $8 \times 10^7$ bits, the miss rate should be 
+We designed the gate inputs to be spread randomly in an array of width $w$. For any large enough $w$, the CPU last level cache (LLC) will miss with a high probability when the input bit-array cannot be fully contained. On our test platform, LLC is 6MB wide.
+\par
+For w=1e5, the L3 cache occupancy of this array is still pretty high, at 1e5/6e6 = 16.6\%; so whenever a (portion of a) gate-descriptor is prefetched into a line of L3 there won't be any CPU stalls on the prefetch but there's a 16.6\% chance of evicting a line from the input array.
+\par
+For $w = 10^7$, the input array occupies $8 \times 10^7$ bits, the miss rate should be $1 - (6\times10^6B/10^7B) = 40\%$. From the observerd $T = 162ns$ we deduce the memory latency, which is the time required by the CPU to fetch the data from the cache, to be $162ns$ per LLC miss.\footnote{ $latency = \frac{T}{2.5 \times \text{miss rate}}$ where $T$ is the total run time per gate}. For $w = 10^8$, the expected miss rate is 94\% and the memory latency is 75ns. 
+
+
+
+
