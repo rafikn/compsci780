@@ -1,10 +1,10 @@
 \section{Background}
-This section outlines the definitons of boolean circuits and indistinguishability obfuscation that are essential to this paper.
+This section outlines the definitions of boolean circuits and indistinguishability obfuscation that are essential to this paper.
 \par
 \subsection{Boolean Circuits}
 Real world programs are compiled into a sequence of machine instructions that can be interpreted by a processing unit (CPU) manipulating a finite number of $bits$ at a time. The CPU is a chip that is made of logical gates that are made of a few transistors. In this context, boolean circuits are a powerful model that can express any algorithm we can run on a CPU\cite{cpu}.
 \par
-Complexity Theory defines a \textit{Boolean Circuit} $C$ with $n$ inputs and $m$ outputs as a finite, labeled, directed acyclic graph. It contains $n$ nodes with no incoming edges or ancestors; called the input nodes and $m$ nodes with no outgoing edges or successors, called the output nodes. All other nodes are called gates and represent the logic operation AND, OR and NOT\cite{bool}. Simply put, a \textit{Boolean Circuit}  is a diagram showing a combination of logic operators to a drive an output from an input. By associating a boolean function with each gate, a boolean circuit computes an arbitrary function $f \in F :  \{0,1\}^n \to \{0,1\}^m$. Two common properties are associated with boolean circuits: 
+Complexity Theory defines a \textit{Boolean Circuit} $C$ with $n$ inputs and $m$ outputs as a finite, labelled, directed acyclic graph. It contains $n$ nodes with no incoming edges or ancestors; called the input nodes and $m$ nodes with no outgoing edges or successors, called the output nodes. All other nodes are called gates and represent the logic operation AND, OR and NOT\cite{bool}. Simply put, a \textit{Boolean Circuit}  is a diagram showing a combination of logic operators to a drive an output from an input. By associating a boolean function with each gate, a boolean circuit computes an arbitrary function $f \in F :  \{0,1\}^n \to \{0,1\}^m$. Two common properties are associated with boolean circuits: 
 \begin{enumerate}  
 	\item The $size$ of a circuit is the number of non-input vertices that it contains. 
 	\item The $depth$ of a circuit is the length of the longest directed path from an input vertex to an output vertex. 
