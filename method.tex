@@ -113,7 +113,7 @@ Since the CPU has a frequency of 3.40 GHz the load and execution of a gate requi
 \par
 For $ w > 10^7$ the computation becomes memory-bound, allowing us to estimate $t_m(10^7) = 162$ns and $t_m(10^8) = 176$ns. Since we used 6 types of 2-input gate and 7 types of 3-input gate (out of a total 14 gate types), a gate evaluation will have 1 fetch to read the gate type and about 2.5 memory-fetches on average to read its inputs. The gate evaluation process will also write the result in the output buffer which will cause additional memory writes. 
 \par
-Once the gate is unpacked in a top-level \textit{C} \textbf{struc} of 16 bytes (1 byte for the type, 8 bytes for the input pointer, before padding to the largest power of 2), with 2.5 input indices of 8 bytes each, a level needs $ (16 + 2.5 \times 8) \times w $ of memory to be fully represented, e.g.\ levels for $w = 10^7$ need 3.6 GB. This amount of memory cannot obviously reside in cache, and on 4 GB memory platforms there would certainly be page-faults requiring hard disk activity. We estimate that the level array can fit inside our system's 16GB RAM without disk faults. Our initial algorithm loads an entire level before feeding into the execution loop. We could improve this by evaluating a gate as soon as it is loaded.  
+Once the gate is unpacked in a top-level \textit{C} \textbf{struct} of 16 bytes (1 byte for the type, 8 bytes for the input pointer, before padding to the largest power of 2), with 2.5 input indices of 8 bytes each, a level needs $ (16 + 2.5 \times 8) \times w $ of memory to be fully represented, e.g.\ levels for $w = 10^7$ need 3.6 GB. This amount of memory cannot obviously reside in cache, and on 4 GB memory platforms there would certainly be page-faults requiring hard disk activity. We estimate that the level array can fit inside our system's 16GB RAM without disk faults. Our initial algorithm loads an entire level before feeding into the execution loop. We could improve this by evaluating a gate as soon as it is loaded.  
 \par
 We designed the gate inputs to be spread randomly in an array of width $w$. For any large enough $w$, the CPU last level cache (LLC) will miss with a high probability when the input bit-array cannot be fully contained. On our test platform, LLC is 6MB wide and the cache line is 64B\cite{agnor}. 
 \par
@@ -121,7 +121,22 @@ For $w = 10^7$, the input array occupies $8 \times 10^7$ bits, the miss rate sho
 \par
 The Ivy Bridge CPU family, to which our test CPU belongs, also seems to have a problem with the pre-fetch instructions wasting time on pre-fetching data that are already in the cache\cite{agnor} which might explain the high bandwidth observed.
 \par
+\begin{table}[]
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+width  & time/Gate (ns) & LLC-loads/Gate & instructions/Gate \\ \hline
+$10^8$ & 175.0707431    & 5.05923626     & 1036.463696       \\ \hline
+$10^7$ & 160.4115891    & 3.80853849     & 982.0177991       \\ \hline
+$10^6$ & 136.3397763    & 3.28139283     & 975.7865379       \\ \hline
+$10^5$ & 133.1333501    & 0.78311853     & 975.5374353       \\ \hline
+$10^4$ & 133.2290595    & 0.75177952     & 976.0244526       \\ \hline
+$10^3$ & 131.1655471    & 0.75319029     & 992.004231        \\ \hline
+\end{tabular}
+\caption{Simulation results per Gate}
+\label{tab:fig3}
+\end{table}
 Based on the data on this paper, we could not observe significant hit on the overall performance when evaluating wide circuits. This might be explained by the CPU's successful speculative optimisation of branch mispredictions. We also suspect that the generation of random 64-bit input indices using the C \textit{rand()} method (which returns a random 32-bit integer) might produce numbers with the most significant bits 75\% biased towards 1\footnote{\url{http://stackoverflow.com/questions/4945698/is-the-value-of-rand-max-always-2n-1}}
 . This will affect the memory-fetch statistics for gates with large indices.
-
-
+\par
+However, as shown in \ref{tab:fig3}, we did notice an increase in the total time of execution per gate around the $w = 10^6$ mark. The LLC-load rate was almost constant for $w < 10^5 $ at 0.75 load per gate but then jumped 5 loads per gate for $w = 10^8$.
