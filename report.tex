@@ -1,4 +1,11 @@
+%
 % !BIB TS-program = biber
+% arara: pdflatex: { shell: yes } 
+% arara: biber
+% arara: pdflatex: { shell: yes }
+% arara: pdflatex: { shell: yes }
+% arara: clean: { files: [ test.aux, test.log] }
+
 \documentclass[a4paper,11pt]{article}
 %-----------------------------------------------------------
 \usepackage{amsmath}
@@ -21,9 +28,7 @@
 \input{method}
 \input{conclusion}
 %-----------------------------------------------------------
-
 \printbibliography
-
-
 %-----------------------------------------------------------
+
 \end{document}
