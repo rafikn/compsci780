@@ -21,16 +21,16 @@ distribution. Obfuscation can also be a powerful means of encrypting data.
 \par
 Until recently, there was no formal definition of obfuscation, and all techniques,
 including manually obscuring data, could be given the label “obfuscation”. These
-techniques do not have quantifiable security and anyone with a debugger, a compiler
-a day's worth of effort can reverse engineer code that has been obfucated with the
-current best efforts\cite{Hsieh}.
+techniques do not have quantifiable security and anyone with appropriate, yet easily
+available, tools such as a debugger and a compiler can reverse engineer code that
+has been obfucated with the current best efforts\cite{hsieh}.
 \par
 Recent developments in cryptography theory have however produced a formal definition of
 obfuscation, which will most assuredly lead to an increased interest in the field,
 in the hope that obfuscation can be practically applied to protect software in the
 near future. The theory also suggests that the adversray work factor, \.i.e. the
 work required to be performed by an adversary to break the obsucation, scales exponentially
-with the program runtime.\cite{Hsieh}
+with the program runtime.\cite{hsieh}
 \par
 However, the drawback of using obfuscation is that it may be ultimately limited
 by the hardware on which the software is run. Obfuscators need to produce obfuscated
@@ -44,5 +44,8 @@ variables and instructions arising from an obfuscation may surpass the limits of
 the hardware within which the software is run.
 \par
 This paper aims to test the hypothesis that obfuscation is limited by the hardware
-it runs on. Should this hypothesis prove true, it would place serious constraints
+it runs on. We argue that the run time of a boolean gate that belongs to an
+obfuscated circuit can be represented by the following model:
+\par
+Should this hypothesis prove true, it would place serious constraints
 on the practicality of obfuscation in most situations.

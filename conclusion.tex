@@ -1,15 +1,53 @@
-\section{Conclusions and Future Work}
-Obfuscation is a potentially powerful tool to encrypt and protect data in the future. However, one of the limitations of obfuscation may prove to be that it lowers the execution speed of a programme, at least in some circumstances.
+\section{Discussion and Future Work}
+Obfuscation is a potentially powerful tool to encrypt and protect data in the
+future. However, one of the limitations of obfuscation may prove to be that it
+lowers the execution speed of a programme, at least in some circumstances.
 \par
-In this experiment we simulated an obfuscated circuit by generating a fixed-width random boolean circuit and evaluated the performance of that circuit. We have shown how \textit{perf} hardware counters can be used to measure cache hits inside a 6MB L3-cache ix86 microprocessor clocked at 4GHz in order to evaluate a simulated obfuscated circuit.
+In this experiment we simulated an obfuscated circuit by generating a fixed-width
+random boolean circuit and evaluated the performance of that circuit. We have
+shown how \textit{perf} hardware counters can be used to measure cache hits
+inside a 6MB L3-cache ix86 microprocessor clocked at 4GHz in order to evaluate
+a simulated obfuscated circuit.
 \par
-We have proposed an analytical model to explain the execution times observed. This analytical model holds true even when the circuit width is very large, i.e. where $w > 10^6$. Further work is required to determine whether this analytical model can predict execution speed to a statistically significant degree of accuracy. In this study our assumption as that when $w$ is large, it would be possible to seperate tg and tm, as tg would become negligible as tm would increase significantly and dominate the results. However the results obtained failed to match this prediction, as the fixed part of T (...) was of a similar order of magnitude as the variable component.
+We have proposed an analytical model to explain the execution times observed. Data
+collected for width $w > 10^6$ falls outside the confidence interval of the regression
+curve of smaller widths. Further statistical analysis will be done before this work
+will be published in a technical journal. In this study our assumption was that when $w$ is large, it would be
+possible to seperate $t_g + t_e$ and $t_m$, as $t_g + t_e$ would become negligible as $t_m(w)$ would increase
+significantly and dominate the results. However the results obtained failed to
+match this prediction
 \par
-Future work would explore the use of the Intel Performance Counter Monitor library\footnote{\url{https://software.intel.com/en-us/articles/intel-performance-counter-monitor}} as a high level interface for measuring real time performance data directly inside the circuit's code to seperate . In particular, we plan to measure the CPU cache and instruction metrics at initialisation time, then at generation time and finally at execution time to isolate each stage's impact on performace.
-
-A more extensive study, using a large range of hardware devices and over a large range of circuit simulations, could help validate or disprove the proposed model.
+In future work, we plan to optimise the code so that a gate evaluation would be
+performed in tens of CPU cycles only. Although our CPU has a maximum specification of 8 instructions per cycle\ref{}, we think
+that attaining that ceiling will be quite hard since most of those instructions are
+low-level instructions needed internally by the CPU.
 \par
-We are focusing on improving our simulation by replacing the random generation mechanism using the \textit{C} standard library \textit{rand()} method with the ’stride’ approach\cite{stride} to 
+We hope however that by reducing $t_e$ by a factor 10 we can better evaluate
+$t_m(w)$ and $t_g$. Our current experiment was not optimised for $t_g$ or $t_m(w)$.
+By generating the entire circuit prior to evaluation, the computation was either memory bound,
+file-IO bound, or stalls and cache-conflict bound when the output of the generator process
+was piped to the input of the evaluator process. We can also improve the size of program in memory by encoding input and output values over
+1 bit rather than the current 1 byte encoding.
+We believe that there is a trade off between memory and CPU when evaluating $t_g$.
+When not reading from a file descriptors, gates would be created using random number generators
+that would require extra CPU cycles.
 \par
- 
-
+We don't think that designing a multithreaded experiment
+will improve the observed running speed if the memory bandwidth of the
+CPU is already saturated and that $t_(w)$ can only be lowered by reducing the memory loads to a minimum.
+\par
+We are also focusing on improving our simulation by replacing the random generation
+mechanism using the \textit{C} standard library \textit{rand()} method with the
+’stride’ approach\cite{stride} to remove any bias in generating large random
+integers and break any predictability patterns.
+\par
+Future work would explore the use of the Intel Performance Counter Monitor
+library\footnote{\url{https://software.intel.com/en-us/articles/intel-performance-counter-monitor}}
+as a high level interface for measuring real time performance data directly
+inside the circuit's code to separate . In particular, we plan to measure the
+CPU cache and instruction metrics at initialisation time, then at generation
+time and finally at execution time to isolate each stage's impact on performance.
+\par
+A more extensive study, using a large range of hardware devices and over
+a large range of circuit simulations, could also help validate or disprove the
+proposed model.

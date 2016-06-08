@@ -1,3 +1,37 @@
+\section{Hypothesis}
+We suggest that, for on a fixed hardware platform, the total running time of a boolean
+circuit follows this analytical model:
+\begin{equation} \label{eq:1}
+T = \max\{ t_g + t_e, t_m(w) \}
+\end{equation}
+where $T$ is the total elapsed (wallclock) time in processing a single gate, $t_g$
+is the CPU time for generating a gate, $t_e$ is the CPU time for evaluating a gate,
+and $t_m(w)$ are the memory-stalls from the gate-generation and gate-evaluation
+computations.
+\par
+Any hardware platform evaluating an obfuscated circuit $C$ needs to represent its gates
+in a readable and comprehensible internal format that is stored in memory, then apply the logical function of every
+gate on the gate's relevant inputs and finally store those results in memory to be used by other gates.
+The evaluation of each each gate has a time cost $t_g$ related to the creation of its
+representation on the evaluation's platform, and a second time cost $t_e$ related
+to the pure evaluation of the logical function of the gate.
+\par
+Our prediction is that $t_g$ and $t_e$ are constant or of a similar order for any gates in
+any given random circuit of the same width $w$.
+\par
+We introduce $t_m(w)$ as the variable time component in a gate's evaluation. It
+is related to the organisation of the circuit and how it is represented on a platform's
+memory. It can also vary from one platform to another. But for a fixed platform, we predict that it is a function of the width $w$.
+If the width $w$ is wider than the last level of cache of CPU of the hardware platform
+evaluating the obfuscated circuit under test, then we are most likely to experience
+memory stalls that severely affect performance. In that scenario, the evaluation time
+is dominated by the time the CPU spends fetching the inputs of a gate, as opposed
+to the time it requires to evaluate the gate's logical function, once the inputs are
+available. This would confirm that the overhead introduced by obfuscation makes obfuscated
+program unadapted to current hardware and therefore inefficient for end users.
+\par
+If the proposed analytical model is validated by our results, we expect it to be
+also valid for other platforms of a similar range.
 \section{Methodology}
 We now describe the algorithm used to simulate an obfuscated boolean circuit and
 the tools used to measure its execution time on a hardware platform.
@@ -29,6 +63,25 @@ of the gate. $G_i(X) = Output$ $array[i]$.
 \end{enumerate}
 The \textit{rand()} method from the \textit{C} standard library was used to
 attribute a random type to a gate, as well as assign its input indices.
+\par
+The entire circuit is generated prior to its evaluation. The generation step
+executed initially is therefore not monitored for performance. The resulting
+circuit is stacked gate by gate in a simplified BPW file.
+\par
+Following the initial BPW format developed by Thomborson, the first 4 bytes represent
+the header of the a BPW file\cite{clark}. The following bytes then represent the
+total gates of the circuit. All gates are sequentially represented from index $0$
+to index $10^8-1$. A given gate's encoding varies from 9 to 25 bytes. The first
+byte holds the type of the gate. The following 8 to 24 bytes present the input
+indices encoded over 64-bits each. The gate's representation could be optimised
+to the minimum bytes needed to encode a gate. Compression could also be used to
+save disk space. We chose to keep the existing model for simplicity. As mentioned
+earlier, the size of the circuits under test was fixed to $N = 10^8$. We modelled
+14 types of Gates; 1 $\times$ 1-input, 6 $\times$ 2-input and 7 $\times$ 3-input
+gates. On average, a gate has 2.43 inputs encoded with 8 bytes per input plus
+one byte for the gate type. The average size of a BPW file storing a circuit is
+therefore $avg(sizeof(Gate)) * 10^8 \approx 2 GB$.
+
 
 \subsection{Evaluation}
 A circuit evaluation is sequential for both gates and levels. During execution,
@@ -41,7 +94,7 @@ level $L_{i+1}$. The hypothesis is that the random distribution of gate input
 indices will significantly affect the overall performance of the circuit for
 large $w$, as the entire input array cannot fit in the cache. Figure \ref{fig:level}
 describes how a level is evaluated.
-\begin{figure}[h]
+\begin{figure}[h!]
 	\center
 	\includegraphics[width=0.8\textwidth]{img/level.png}
 	\caption{Simple description of Level $L_i$ evaluation}
@@ -100,43 +153,23 @@ needs to for the result of a previous instruction before proceeding.
 \item \textbf{LLC-loads} are instructions to load results from the Last-Level of
 Cache (or L3) of the CPU. L3 cache is the largest and highest-latency level of
 cache for the Intel Core i5 CPU. It is shared amongst all its cores.
-
 \end{itemize}
-For every value of $w$, we configure \textit{perf} to run the experiment 3 times
-and collect the arithmetic average of the event counters. Each execution produces
-similar results such that 3 executions are enough to produce a statistically
-significant average.
-
 
 \section{Simulation Results}
-We suggest that the total running time of a circuit follows the analytical model:
-\begin{equation}
-T = \max\{ t_g + t_e, t_m(w) \}
-\end{equation}
-where $T$ is the total elapsed (wallclock) time in processing a single gate, $t_g$
-is the CPU time for generating a gate, $t_e$ is the CPU time for evaluating a gate,
-and $t_m(w)$ are the memory-stalls from the gate-generation and gate-evaluation
-computations.
+In our hypthesis formulated by equation \ref{eq:1}, we argued that the total
+runtime of a gate is either dominated by the deterministic time of generation
+and execution of the gate when $w$ is small, or by the variable time the CPU spends preparing the
+inputs for a gate's evaluation when $w$ is large.
 \par
-In our experiment, we generate the entire circuit prior to its evaluation. $t_g$
-is in fact related to the time cost of loading of the gate for execution. We assume
-that this time component is near constant per gate and is not affected by the
-width $w$. The generation step executed initially is therefore not monitored for
-performance. The resulting circuit is stacked gate by gate in a simplified BPW file.
-Following the initial BPW format developed by Thomborson, the first 4 bytes represent
-the header of the a BPW file\cite{clark}. The following bytes then represent the
-total gates of the circuit. All gates are sequentially represented from index $0$
-to index $10^8-1$. A given gate's encoding varies from 9 to 25 bytes. The first
-byte holds the type of the gate. The following 8 to 24 bytes present the input
-indices encoded over 64-bits each. The gate's representation could be optimised
-to the minimum bytes needed to encode a gate. Compression could also be used to
-save disk space. We chose to keep the existing model for simplicity. As mentioned
-earlier, the size of the circuits under test was fixed to $N = 10^8$. The average
-size of a BPW file storing a circuit is therefore $avg(sizeof(Gate)) * 10^8 \approx 2 GB$
-\footnote{We modelled 14 types of Gates; 1 $\times$ 1-input, 6 $\times$ 2-input and 7 $\times$ 3-input gates. On average, a gate has 2.43 inputs encoded with 8 bytes per input plus one byte for the gate type.}.
+For every pre-determined value of $w$, \textit{perf} runs the experiment 3 times
+and collects the arithmetic average of the event counters. The data
+collected is presented in tables \ref{tab:res1} and \ref{tab:res2}.
+\par
 
-\begin{table}[]
+\begin{table}[h]
 \centering
+\caption{Average results of 3 simulation runs for $ w \in \{10^3, 10^4, 10^5\}$.}
+\label{tab:res1}
 \begin{tabular}{|l|l|l|l|}
 \hline
 w                 & $10^3$       & $10^4$       & $10^5$       \\ \hline
@@ -149,13 +182,13 @@ branch-misses     & 213275235    & 267635214    & 267596585    \\ \hline
 LLC-loads         & 75319029     & 75177952     & 78311853     \\ \hline
 std deviation     & 1.49\%       & 0.94\%       & 0.27\%       \\ \hline
 \end{tabular}
-\caption{Simulation results for $ w \in \{10^3, 10^4, 10^5\}$ }
-\label{tab:res1}
 \end{table}
 
 
 \begin{table}[h]
 \centering
+\caption{Average results of 3 simulation runs for $ w \in \{10^6, 10^7, 10^8\}$}
+\label{tab:res2}
 \begin{tabular}{|l|l|l|l|}
 \hline
 w                 & $10^6$      & $10^7$      & $10^8$       \\ \hline
@@ -168,34 +201,68 @@ branch-misses     & 266970610   & 266910904   & 268274635    \\ \hline
 LLC-loads         & 328139283   & 380853849   & 505923626    \\ \hline
 std deviation     & 0.43\%      & 0.50\%      & 0.19\%       \\ \hline
 \end{tabular}%
-\caption{Simulation results for $ w \in \{10^6, 10^7, 10^8\}$}
-\label{tab:res2}
 \end{table}
 
 
 \par
-From the results collected in tables \ref{tab:res1} and \ref{tab:res2} we established the following:
-
+From the results collected in tables \ref{tab:res1} and \ref{tab:res2} we
+assume that $t_m(w)$ for $w = 10^3$ is negligible. In our experiment
+$E(w = 10^6)$ the total run time is assumed to reflect load and execution operations
+only with no significant width penalty. For $w = 10^3, N=10^8$, we have
+$N \times T = 13116 \text{ms} \implies T  = t_g + t_e \approx 130 \text{ns}$.
+\par
+For $ w > 10^7$ the computation becomes memory-bound, allowing us to
+estimate $T = 162$ns and $t_m(10^8) = 46$ns.
+Our initial results seem to suggest that
 \[ T =
   \begin{cases}
     t_g + t_e       & \quad \text{if } \log_{10}(w) < 7\\
-    t_m(w) & \quad \text{if } \log_{10}(w) > 7\\
+    t_g + t_e  + t_m(w) & \quad \text{if } \log_{10}(w) > 7\\
   \end{cases}
 \]
-
-We estimate that $t_m(w)$ for $w = 10^3$ is negligible. In our experiment
-$E(w = 10^6)$ the total run time is assumed to reflect load and execution operations
-only (with no width penalty) which establishes $t_g + t_e \approx 130\text{ ns}$.
-\footnote{ For $w = 10^3, N=10^8$, we have $N \times T = 13116 \text{ms} \implies T \approx 130 \text{ns}$ }.
+which disprooves the hypothesis stated in equation \ref{eq:1} as $t_m(w)$ is not
+dominant compared with $t_g + t_e$.
+\par
 Since the CPU has a frequency of 3.40 GHz the load and execution of a gate require
-about 450 CPU cycles per gate
-\footnote{$130 \times 10^{-9} \times 3.4 \times 10^9 = 442$},
+about $450$ CPU cycles per gate,
 which is up to 2000 instruction per cycle (at 1.7 instructions per cycle) on a
 quad-core CPU assuming no stalls. For all tested $w < 10^7$ we observed a stable
 instruction per cycle rate at 1.7 ins/cycle with 0.2 instruction per cycle stalled.
+By dividing the the total instructions observed by the total number of gates, we establish
+the instructions per gate at around 1000 instructions. Which suggests that
+the CPU was running at about 4Ghz, a higher frequency that the base 3.4 Ghz frequency.
 \par
-For $ w > 10^7$ the computation becomes memory-bound, allowing us to
-estimate $t_m(10^7) = 162$ns and $t_m(10^8) = 176$ns.
+\begin{table}[h!]
+\centering
+\caption{Average simulation results per Gate}
+\label{tab:fig3}
+\begin{tabular}{|c|c|c|c|}
+\hline
+width  & time/Gate (ns) & LLC-loads/Gate & instructions/Gate \\ \hline
+$10^8$ & 175.0707431    & 5.05923626     & 1036.463696       \\ \hline
+$10^7$ & 160.4115891    & 3.80853849     & 982.0177991       \\ \hline
+$10^6$ & 136.3397763    & 3.28139283     & 975.7865379       \\ \hline
+$10^5$ & 133.1333501    & 0.78311853     & 975.5374353       \\ \hline
+$10^4$ & 133.2290595    & 0.75177952     & 976.0244526       \\ \hline
+$10^3$ & 131.1655471    & 0.75319029     & 992.004231        \\ \hline
+\end{tabular}
+\end{table}
+\par
+While $w$ increases, the instructions per gate average varied slightly between 976 and 1036
+instructions \.i.e. a standard deviation of $24$ instructions, or about $2\%$. However,
+the task-clock time average spent per clock has increased from $130ns$ for $w=10^3$
+to $175ns$ for $w=10^8$. The standard deviation observed is about $12\%$, or about $18ns\%$.
+\begin{figure}[h!]
+	\center
+	\includegraphics[width=0.68\textwidth]{img/image.png}
+	\caption[width=0.48\textwidth]{Evolution of task-clock time per gate in function
+	of width $w$. A base-10 log scale is used for the X axis.
+	The trendline is $t(w) = 0.67\ log_{10}(w) + 126.52$, $R^2 = 0.86748$ based on the
+	data collected for $w \leq 10^6$.
+	The 5\% confidence interval boundries are plotted in red.
+}
+	\label{fig:level}
+\end{figure}
 \par
 Since we used six types of 2-input gate and seven types of 3-input gate (out of
 a total of fourteen gate types), a gate evaluation has one fetch to read the gate
@@ -238,21 +305,6 @@ problem with the pre-fetch instructions wasting time on pre-fetching data that
 are already in the cache\cite{agner} which might explain the high bandwidth
 observed.
 \par
-\begin{table}[]
-\centering
-\begin{tabular}{|c|c|c|c|}
-\hline
-width  & time/Gate (ns) & LLC-loads/Gate & instructions/Gate \\ \hline
-$10^8$ & 175.0707431    & 5.05923626     & 1036.463696       \\ \hline
-$10^7$ & 160.4115891    & 3.80853849     & 982.0177991       \\ \hline
-$10^6$ & 136.3397763    & 3.28139283     & 975.7865379       \\ \hline
-$10^5$ & 133.1333501    & 0.78311853     & 975.5374353       \\ \hline
-$10^4$ & 133.2290595    & 0.75177952     & 976.0244526       \\ \hline
-$10^3$ & 131.1655471    & 0.75319029     & 992.004231        \\ \hline
-\end{tabular}
-\caption{Average simulation results per Gate}
-\label{tab:fig3}
-\end{table}
 Based on the data on this paper, we could not observe significant hit on the
 overall performance when evaluating wide circuits. The average LLC-loads per
 gate do behave as predicted, as shown in \ref{tab:fig3}, where a large increase
